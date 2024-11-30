@@ -1,10 +1,24 @@
+---
+title: "Problem Set 6"
+author: "Taeyoung Heo (UMID # 2914 5801)"
+format: 
+  html: 
+    embed-resources: true
+execute:
+  error: true
+---
+
+GitHub repository link : <a href="https://github.com/tedheo10/PS6_STATS506">https://github.com/tedheo10/PS6_STATS506</a>
+
+```{r}
+```
 
 # Problem Set 6
-# a. a Stratified Bootstrap by Team
-# a-1. Without any parallel processing 
+<b>a.</b> a Stratified Bootstrap by Team<br>
+<b>a-1.</b> Without any parallel processing 
 
+```{r}
 library(DBI)
-
 lahman <- dbConnect(RSQLite::SQLite(), "lahman_1871-2022.sqlite")
 fielding <- dbGetQuery(lahman, "SELECT * FROM FIELDING")
 names(fielding) <- tolower(names(fielding))
@@ -48,10 +62,11 @@ boot_sd <- function(data) {
 nsim <- 1000
 boot_sample_default <- lapply(1:nsim, boot) # make bootstrap samples
 sd_RF_default <- boot_sd(boot_sample_default) # calculate the sample standard deviation
+```
 
+<b>a-2.</b> Using parallel processing
 
-#a-2. Using parallel processing
-
+```{r}
 library(parallel)
 
 # This code comes from STATS 506 Class Note
@@ -60,17 +75,22 @@ clusterExport(cl, varlist = c("fielding", "team_RF", "team_list", "boot"))
 boot_sample_parallel <- parLapply(cl, 1:nsim, boot) # make bootstrap samples
 sd_RF_parallel <- boot_sd(boot_sample_parallel) # calculate the sample standard deviation
 stopCluster(cl)
+```
 
-#a-3. Using future
+<b>a-3.</b> Using future
+
+```{r}
 library(future)
 plan(multisession)
 boot_sample_future <- future(lapply(1:nsim, boot)) # make bootstrap samples
 boot_sample_future <- suppressWarnings(value(boot_sample_future)) # generate samples
 sd_RF_future <- boot_sd(boot_sample_future) # calculate the sample standard deviation
 plan(sequential)
+```
 
-#b. a table showing the estimated RF and associated standard errors
+<b>b.</b> a table showing the estimated RF and associated standard errors
 
+```{r}
 sorted_RF <- team_RF[order(team_RF$RF, decreasing = TRUE), ] # sort RF
 top10_RF <- sorted_RF[1:10, ] # top 10 RF teams 
 rownames(top10_RF) <- 1:10 # change row names 
@@ -82,11 +102,12 @@ for(i in top10_RF$teamid) {
   top10_RF$future_sd[top10_RF$teamid == i] <- sd_RF_future[i]
 }
 top10_RF # top10 table 
+```
 
+<b>c.</b> The performance difference between the versions<br>
+<b>c-1.</b> Performance
 
-#c. The performance difference between the versions
-#c-1. Performance
-
+```{r}
 default_time <- system.time({
   lapply(1:nsim, boot)
 })
@@ -106,6 +127,7 @@ future_time <-  system.time({
 })
 
 rbind(default_time, parallel_time, future_time)
+```
 
-#c-2. Discussion
-# Parallel processing led to a significant improvement in performance compared to default R processing. By utilizing multiple cores, tasks can be executed simultaneously, resulting in a substantial performance boost. Likewise, using the "future" also demonstrated an improvement in performance for handling large-scale computations with concurrent task execution and background processing. 
+<b>c-2.</b> Discussion<br>
+: Parallel processing led to a significant improvement in performance compared to default R processing. By utilizing multiple cores, tasks can be executed simultaneously, resulting in a substantial performance boost. Likewise, using the "future" also demonstrated an improvement in performance for handling large-scale computations with concurrent task execution and background processing. 
